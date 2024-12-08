@@ -39,19 +39,51 @@ jobs:
       - name: Trigger Render Deployment (Dev)
         run: |
           response=$(curl -X POST https://api.render.com/deploy/${{ secrets.RENDER_DEPLOYMENT_HOOK_URL }})
-          echo "Dev Deployment Triggered: $response"
+          echo "Development Deployment Triggered"
 
       - name: Wait for Deployment to Finish (Dev)
         run: |
+          # Poll Render API until deployment finishes (max 15 minutes)
+          max_attempts=30
+          attempt=0
           deployment_status="pending"
-          while [[ "$deployment_status" != "succeeded" && "$deployment_status" != "failed" ]]; do
-            deployment_status=$(curl -s -X GET https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/$deployment_id -H "Authorization: Bearer ${{ secrets.RENDER_API_TOKEN }}")
+          
+          while [[ "$deployment_status" != "succeeded" && "$deployment_status" != "failed" && $attempt -lt $max_attempts ]]; do
+            echo "Checking deployment status... attempt #$((attempt + 1))"
+            
+            # Fetch the deployment status
+            deployment_status=$(curl -s -X GET https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/$deployment_id \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_TOKEN }}")
+            
+            # Extract the status from the response
+            # Ensure the response is JSON and contains the expected deployment data
+            if [[ $(echo "$deployment_status" | jq 'type') != '"array"' ]]; then
+              echo "Error: Deployment API did not return an array response."
+              exit 1
+            fi
             deployment_status=$(echo "$deployment_status" | jq -r '.[0].deploy.status')
+          
             echo "Current deployment status: $deployment_status"
+          
+            if [[ "$deployment_status" == "live" ]]; then
+              echo "Deployment succeeded."
+              break
+            elif [[ "$deployment_status" == "failed" ]]; then
+              echo "Deployment failed."
+              exit 1  # Exit with failure if deployment fails
+            else
+              echo "Deployment is still in progress. Status: $deployment_status"
+            
+            fi
+          
+            # Wait for 30 seconds before checking again
             sleep 30
+            attempt=$((attempt + 1))
           done
-          if [[ "$deployment_status" == "failed" ]]; then
-            exit 1
+          
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Deployment did not complete in the expected time frame."
+            exit 1  # Exit with failure if deployment takes too long
           fi
 
   build-and-deploy-prod:
@@ -85,17 +117,50 @@ jobs:
       - name: Trigger Render Deployment (Prod)
         run: |
           response=$(curl -X POST https://api.render.com/deploy/${{ secrets.RENDER_DEPLOYMENT_HOOK_URL }})
-          echo "Prod Deployment Triggered: $response"
+          echo "Production Deployment Triggered"
 
       - name: Wait for Deployment to Finish (Prod)
         run: |
+          run: |
+          # Poll Render API until deployment finishes (max 15 minutes)
+          max_attempts=30
+          attempt=0
           deployment_status="pending"
-          while [[ "$deployment_status" != "succeeded" && "$deployment_status" != "failed" ]]; do
-            deployment_status=$(curl -s -X GET https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/$deployment_id -H "Authorization: Bearer ${{ secrets.RENDER_API_TOKEN }}")
+          
+          while [[ "$deployment_status" != "succeeded" && "$deployment_status" != "failed" && $attempt -lt $max_attempts ]]; do
+            echo "Checking deployment status... attempt #$((attempt + 1))"
+            
+            # Fetch the deployment status
+            deployment_status=$(curl -s -X GET https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys/$deployment_id \
+              -H "Authorization: Bearer ${{ secrets.RENDER_API_TOKEN }}")
+            
+            # Extract the status from the response
+            # Ensure the response is JSON and contains the expected deployment data
+            if [[ $(echo "$deployment_status" | jq 'type') != '"array"' ]]; then
+              echo "Error: Deployment API did not return an array response."
+              exit 1
+            fi
             deployment_status=$(echo "$deployment_status" | jq -r '.[0].deploy.status')
+          
             echo "Current deployment status: $deployment_status"
+          
+            if [[ "$deployment_status" == "live" ]]; then
+              echo "Deployment succeeded."
+              break
+            elif [[ "$deployment_status" == "failed" ]]; then
+              echo "Deployment failed."
+              exit 1  # Exit with failure if deployment fails
+            else
+              echo "Deployment is still in progress. Status: $deployment_status"
+            
+            fi
+          
+            # Wait for 30 seconds before checking again
             sleep 30
+            attempt=$((attempt + 1))
           done
-          if [[ "$deployment_status" == "failed" ]]; then
-            exit 1
+          
+          if [ $attempt -ge $max_attempts ]; then
+            echo "Deployment did not complete in the expected time frame."
+            exit 1  # Exit with failure if deployment takes too long
           fi
