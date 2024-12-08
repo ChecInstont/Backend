@@ -1,15 +1,12 @@
-# Use the official Python 3.12.1 image as a base
-FROM python:3.12.1-slim
+# Use the official Python 3 image as a base
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy dependency definitions
+# Copy requirements.txt and install dependencies
 COPY requirements.txt .
-
-# Install dependencies
-RUN python.exe -m pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 # Copy the FastAPI application code
 COPY ./app ./app
