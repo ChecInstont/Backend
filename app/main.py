@@ -18,6 +18,6 @@ def check_health():
   return {"health": "Ok"}
 
 # Example route with a query parameter
-@app.get("/items/")
+@app.get("/api/items/")
 def read_item(skip: int = 0, limit: int = 10):
     return {"skip": skip, "limit": limit}
