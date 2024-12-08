@@ -39,7 +39,7 @@ jobs:
       - name: Trigger Render Deployment (Dev)
         run: |
           response=$(curl -X POST https://api.render.com/deploy/${{ secrets.RENDER_DEPLOYMENT_HOOK_URL }})
-          echo "Dev Deployment Triggered: $response"
+          echo "Development Deployment Triggered"
 
       - name: Wait for Deployment to Finish (Dev)
         run: |
@@ -117,7 +117,7 @@ jobs:
       - name: Trigger Render Deployment (Prod)
         run: |
           response=$(curl -X POST https://api.render.com/deploy/${{ secrets.RENDER_DEPLOYMENT_HOOK_URL }})
-          echo "Prod Deployment Triggered: $response"
+          echo "Production Deployment Triggered"
 
       - name: Wait for Deployment to Finish (Prod)
         run: |
