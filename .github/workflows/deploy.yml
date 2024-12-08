@@ -8,7 +8,7 @@ on:
       - "v*"      # Trigger for prod deployment on tag creation (e.g., v1.0, v2.0)
 
 jobs:
-  build-and-deploy-dev:
+  build-and-deploy-development-server:
     runs-on: ubuntu-latest
     environment: development  # Specify dev environment for dev deployment
 
@@ -22,7 +22,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Authenticate with Render (Dev)
+      - name: Authenticate with Render (Development)
         env:
           RENDER_API_TOKEN: ${{ secrets.RENDER_API_TOKEN }}
         run: |
@@ -36,12 +36,12 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_IMAGE_NAME }}:latest .
 
-      - name: Trigger Render Deployment (Dev)
+      - name: Trigger Render Deployment (Development)
         run: |
           response=$(curl -X POST https://api.render.com/deploy/${{ secrets.RENDER_DEPLOYMENT_HOOK_URL }})
           echo "Development Deployment Triggered"
 
-      - name: Wait for Deployment to Finish (Dev)
+      - name: Wait for Deployment to Finish (Development)
         run: |
           # Poll Render API until deployment finishes (max 15 minutes)
           max_attempts=30
@@ -86,7 +86,7 @@ jobs:
             exit 1  # Exit with failure if deployment takes too long
           fi
 
-  build-and-deploy-prod:
+  build-and-deploy-production-server:
     runs-on: ubuntu-latest
     environment: production  # Specify prod environment for prod deployment
 
@@ -100,7 +100,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Authenticate with Render (Prod)
+      - name: Authenticate with Render (Production)
         env:
           RENDER_API_TOKEN: ${{ secrets.RENDER_API_TOKEN }}
         run: |
@@ -114,14 +114,13 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_IMAGE_NAME }}:latest .
 
-      - name: Trigger Render Deployment (Prod)
+      - name: Trigger Render Deployment (Production)
         run: |
           response=$(curl -X POST https://api.render.com/deploy/${{ secrets.RENDER_DEPLOYMENT_HOOK_URL }})
           echo "Production Deployment Triggered"
 
-      - name: Wait for Deployment to Finish (Prod)
+      - name: Wait for Deployment to Finish (Production)
         run: |
-          run: |
           # Poll Render API until deployment finishes (max 15 minutes)
           max_attempts=30
           attempt=0
